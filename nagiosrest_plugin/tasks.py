@@ -13,6 +13,13 @@ def _get_instance_id_url(address, instance_id):
     )
 
 
+def _get_instance_ip(ctx, property_name):
+    try:
+        return ctx.instance.runtime_properties[property_name]
+    except KeyError:
+        return ctx.node.properties[property_name]
+
+
 @operation
 def add_monitoring(ctx,
                    nagiosrest_address, nagiosrest_user, nagiosrest_pass,
@@ -23,7 +30,7 @@ def add_monitoring(ctx,
         _get_instance_id_url(nagiosrest_address, ctx.instance.id),
         auth=(nagiosrest_user, nagiosrest_pass),
         json={
-            'instance_ip': ctx.instance[instance_ip_property],
+            'instance_ip': _get_instance_ip(ctx, instance_ip_property),
             'tenant': cloudify_ctx.tenant_name,
             'deployment': ctx.deployment.id,
             'target_type': target_type,

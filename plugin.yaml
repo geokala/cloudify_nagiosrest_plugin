@@ -1,0 +1,39 @@
+plugins:
+    nagiosrest:
+        executor: central_deployment_agent
+        source: null
+        package_name: cloudify-nagiosrest-plugin
+        package_version: 0.1.1
+        install: true
+
+
+data_types:
+    cloudify.datatypes.nagiosrest.CreateInputs:
+        properties:
+            nagiosrest_address:
+                description: >
+                    The IP address or hostname of the nagiosrest server.
+                    This should be the server that the managed nagios plugin
+                    has configured.
+                default: { get_secret: nagiosrest_address }
+            nagiosrest_user:
+                description: >
+                    The username for nagiosrest.
+                default: { get_secret: nagiosrest_user }
+            nagiosrest_pass:
+                description: >
+                    The password for nagiosrest.
+                default: { get_secret: nagiosrest_pass }
+            target_type:
+                description: >
+                    The name of the target type, which must already exist on
+                    the managed nagios server.
+            heal_on_failure:
+                description: >
+                    Whether to automatically trigger heal workflows for these
+                    node instances when the host healthcheck (ping) fails.
+                    Depending on check configuration, this may take several
+                    minutes and multiple ping failures to trigger.
+                default: false
+
+# TODO: DeleteInputs

@@ -62,6 +62,7 @@ def _make_call(ctx, request_method, data=None):
 def add_monitoring(ctx):
     props = ctx.node.properties['nagiosrest_monitoring']
     _make_call(
+        ctx,
         requests.put,
         {
             'instance_ip': _get_instance_ip(ctx),
@@ -76,5 +77,6 @@ def add_monitoring(ctx):
 @operation
 def remove_monitoring(ctx):
     _make_call(
+        ctx,
         requests.delete,
     )

@@ -3,6 +3,7 @@ import requests
 
 from cloudify import ctx as cloudify_ctx
 from cloudify.decorators import operation
+from cloudify.exceptions import RecoverableError, NonRecoverableError
 
 
 def _get_instance_id_url(address, instance_id):
@@ -20,16 +21,43 @@ def _get_instance_ip(ctx, property_name):
         return ctx.node.properties[property_name]
 
 
+def _make_call(request_method, address, username, password, data=None):
+    result = request_method(
+        address,
+        auth=(username, password),
+        json=data,
+    )
+
+    if result.status_code >= 500:
+        raise RecoverableError(
+            'Server is currently unavailable. Response was '
+            '{code}: {details}'.format(
+                code=result.status_code,
+                details=result.text,
+            )
+        )
+    elif result.status_code >= 400:
+        raise NonRecoverableError(
+            'Parameters passed to server were incorrect. Response was '
+            '{code}: {details}'.format(
+                code=result.status_code,
+                details=result.text,
+            )
+        )
+    else:
+        return result
+
+
 @operation
 def add_monitoring(ctx,
                    nagiosrest_address, nagiosrest_user, nagiosrest_pass,
                    target_type, heal_on_failure,
                    instance_ip_property):
-    # TODO: Do some error handling
-    requests.put(
+    _make_call(
+        requests.put,
         _get_instance_id_url(nagiosrest_address, ctx.instance.id),
-        auth=(nagiosrest_user, nagiosrest_pass),
-        json={
+        nagiosrest_user, nagiosrest_pass,
+        {
             'instance_ip': _get_instance_ip(ctx, instance_ip_property),
             'tenant': cloudify_ctx.tenant_name,
             'deployment': ctx.deployment.id,
@@ -42,8 +70,9 @@ def add_monitoring(ctx,
 @operation
 def remove_monitoring(ctx, nagiosrest_address, nagiosrest_user,
                       nagiosrest_pass):
-    # TODO: Do some error handling
-    requests.delete(
+    _make_call(
+        requests.delete,
         _get_instance_id_url(nagiosrest_address, ctx.instance.id),
-        auth=(nagiosrest_user, nagiosrest_pass),
+        nagiosrest_user,
+        nagiosrest_pass,
     )

@@ -21,25 +21,29 @@ def _get_instance_ip(ctx, property_name):
         return ctx.node.properties[property_name]
 
 
-def _make_call(request_method, address, username, password, data=None):
+def _make_call(request_method, url, username, password, data=None):
     result = request_method(
-        address,
+        url,
         auth=(username, password),
         json=data,
     )
 
     if result.status_code >= 500:
         raise RecoverableError(
-            'Server is currently unavailable. Response was '
-            '{code}: {details}'.format(
+            'Server is currently unavailable. '
+            'Call was to {url}, and '
+            'response was {code}: {details}'.format(
+                url=url,
                 code=result.status_code,
                 details=result.text,
             )
         )
     elif result.status_code >= 400:
         raise NonRecoverableError(
-            'Parameters passed to server were incorrect. Response was '
-            '{code}: {details}'.format(
+            'Parameters passed to server were incorrect. '
+            'Call was to {url}, and '
+            'response was {code}: {details}'.format(
+                url=url,
                 code=result.status_code,
                 details=result.text,
             )

@@ -28,8 +28,9 @@ def _get_credentials(ctx):
 
 
 def _make_call(ctx, request_method, data=None):
+    url = _get_instance_id_url(ctx)
     result = request_method(
-        _get_instance_id_url(ctx),
+        url,
         auth=_get_credentials(ctx),
         json=data,
     )

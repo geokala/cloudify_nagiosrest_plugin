@@ -3,7 +3,7 @@ plugins:
         executor: central_deployment_agent
         source: null
         package_name: cloudify-nagiosrest-plugin
-        package_version: 0.2.0
+        package_version: 0.2.1
         install: true
 
 
@@ -12,17 +12,17 @@ plugins:
 data_types:
     cloudify.datatypes.nagiosrest.Properties:
         properties:
-            nagiosrest_address:
+            address:
                 description: >
                     The IP address or hostname of the nagiosrest server.
                     This should be the server that the managed nagios plugin
                     has configured.
                 default: { get_secret: nagiosrest_address }
-            nagiosrest_user:
+            username:
                 description: >
                     The username for nagiosrest.
                 default: { get_secret: nagiosrest_user }
-            nagiosrest_pass:
+            password:
                 description: >
                     The password for nagiosrest.
                 default: { get_secret: nagiosrest_pass }

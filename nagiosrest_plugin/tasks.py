@@ -27,7 +27,7 @@ def _get_credentials(ctx):
     return props['username'], props['password']
 
 
-def _make_call(ctx, request_method, url, data=None):
+def _make_call(ctx, request_method, data=None):
     result = request_method(
         _get_instance_id_url(ctx),
         auth=_get_credentials(ctx),

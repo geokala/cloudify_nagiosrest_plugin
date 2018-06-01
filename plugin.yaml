@@ -3,13 +3,14 @@ plugins:
         executor: central_deployment_agent
         source: null
         package_name: cloudify-nagiosrest-plugin
-        package_version: 0.1.5
+        package_version: 0.2.0
         install: true
 
 
-# TODO: Keep these, change plugin to use properties on the node
+# These should be included under the nagiosrest_monitoring key on a monitored
+# node's properties. See example blueprints.
 data_types:
-    cloudify.datatypes.nagiosrest.CreateInputs:
+    cloudify.datatypes.nagiosrest.Properties:
         properties:
             nagiosrest_address:
                 description: >
@@ -36,5 +37,8 @@ data_types:
                     Depending on check configuration, this may take several
                     minutes and multiple ping failures to trigger.
                 default: false
-
-# TODO: DeleteInputs
+            instance_ip_property:
+                description: >
+                    The runtime property or node property (if runtime property
+                    is unavailable) that contains this node's IP address.
+                default: ip

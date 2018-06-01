@@ -6,25 +6,31 @@ from cloudify.decorators import operation
 from cloudify.exceptions import RecoverableError, NonRecoverableError
 
 
-def _get_instance_id_url(address, instance_id):
+def _get_instance_id_url(ctx):
     # TODO: HTTPS
     return 'http://{address}/nagiosrest/targets/{instance_id}'.format(
-        address=address,
-        instance_id=instance_id,
+        address=ctx.node.properties['nagiosrest_monitoring']['address'],
+        instance_id=ctx.instance.id,
     )
 
 
-def _get_instance_ip(ctx, property_name):
+def _get_instance_ip(ctx):
+    ip = ctx.node.properties['nagiosrest_monitoring']['instance_ip_property']
     try:
-        return ctx.instance.runtime_properties[property_name]
+        return ctx.instance.runtime_properties[ip]
     except KeyError:
-        return ctx.node.properties[property_name]
+        return ctx.node.properties[ip]
 
 
-def _make_call(request_method, url, username, password, data=None):
+def _get_credentials(ctx):
+    props = ctx.node.properties['nagiosrest_monitoring']
+    return props['username'], props['password']
+
+
+def _make_call(ctx, request_method, url, data=None):
     result = request_method(
-        url,
-        auth=(username, password),
+        _get_instance_id_url(ctx),
+        auth=_get_credentials(ctx),
         json=data,
     )
 
@@ -53,30 +59,22 @@ def _make_call(request_method, url, username, password, data=None):
 
 
 @operation
-def add_monitoring(ctx,
-                   nagiosrest_address, nagiosrest_user, nagiosrest_pass,
-                   target_type, heal_on_failure,
-                   instance_ip_property):
+def add_monitoring(ctx):
+    props = ctx.node.properties['nagiosrest_monitoring']
     _make_call(
         requests.put,
-        _get_instance_id_url(nagiosrest_address, ctx.instance.id),
-        nagiosrest_user, nagiosrest_pass,
         {
-            'instance_ip': _get_instance_ip(ctx, instance_ip_property),
+            'instance_ip': _get_instance_ip(ctx),
             'tenant': cloudify_ctx.tenant_name,
             'deployment': ctx.deployment.id,
-            'target_type': target_type,
-            'heal_on_failure': heal_on_failure,
+            'target_type': props['target_type'],
+            'heal_on_failure': props['heal_on_failure'],
         },
     )
 
 
 @operation
-def remove_monitoring(ctx, nagiosrest_address, nagiosrest_user,
-                      nagiosrest_pass):
+def remove_monitoring(ctx):
     _make_call(
         requests.delete,
-        _get_instance_id_url(nagiosrest_address, ctx.instance.id),
-        nagiosrest_user,
-        nagiosrest_pass,
     )

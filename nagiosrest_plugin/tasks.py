@@ -8,7 +8,7 @@ from cloudify.exceptions import RecoverableError, NonRecoverableError
 
 def _get_instance_id_url(address, instance_id):
     # TODO: HTTPS
-    return 'http://{address}/nagiosrest/{instance_id}'.format(
+    return 'http://{address}/nagiosrest/targets/{instance_id}'.format(
         address=address,
         instance_id=instance_id,
     )

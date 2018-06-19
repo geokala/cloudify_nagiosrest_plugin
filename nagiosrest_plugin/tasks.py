@@ -70,7 +70,6 @@ def add_monitoring(ctx):
             'tenant': cloudify_ctx.tenant_name,
             'deployment': ctx.deployment.id,
             'target_type': props['target_type'],
-            'heal_on_failure': props['heal_on_failure'],
         },
     )
 

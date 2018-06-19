@@ -73,4 +73,3 @@ node_templates:
       management_network_name: { get_input: management_network_name }
       nagiosrest_monitoring:
         target_type: vnf_fake_type_1
-        heal_on_failure: true

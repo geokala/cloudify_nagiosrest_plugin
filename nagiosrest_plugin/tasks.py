@@ -8,8 +8,13 @@ from cloudify.exceptions import RecoverableError, NonRecoverableError
 
 def _get_instance_id_url(ctx):
     # TODO: HTTPS
-    return 'http://{address}/nagiosrest/targets/{instance_id}'.format(
+    return (
+        'http://{address}/nagiosrest/targets/'
+        '{tenant}/{deployment}/{instance_id}'
+    ).format(
         address=ctx.node.properties['nagiosrest_monitoring']['address'],
+        tenant=cloudify_ctx.tenant_name,
+        deployment=ctx.deployment.id,
         instance_id=ctx.instance.id,
     )
 
@@ -67,8 +72,6 @@ def add_monitoring(ctx):
         requests.put,
         {
             'instance_ip': _get_instance_ip(ctx),
-            'tenant': cloudify_ctx.tenant_name,
-            'deployment': ctx.deployment.id,
             'target_type': props['target_type'],
         },
     )

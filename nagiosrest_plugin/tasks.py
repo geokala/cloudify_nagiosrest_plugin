@@ -7,9 +7,8 @@ from cloudify.exceptions import RecoverableError, NonRecoverableError
 
 
 def _get_instance_id_url(ctx):
-    # TODO: HTTPS
     return (
-        'http://{address}/nagiosrest/targets/'
+        'https://{address}/nagiosrest/targets/'
         '{tenant}/{deployment}/{instance_id}'
     ).format(
         address=ctx.node.properties['nagiosrest_monitoring']['address'],
@@ -32,12 +31,26 @@ def _get_credentials(ctx):
     return props['username'], props['password']
 
 
+def _get_cert(ctx):
+    props = ctx.node.properties['nagiosrest_monitoring']
+    return _FakeCertFile(props['certificate'])
+
+
+class _FakeCertFile(object):
+    def __init__(self, data):
+        self.contents = data
+
+    def read(self):
+        return self.contents
+
+
 def _make_call(ctx, request_method, data=None):
     url = _get_instance_id_url(ctx)
     result = request_method(
         url,
         auth=_get_credentials(ctx),
         json=data,
+        verify=_get_cert(ctx),
     )
 
     if result.status_code >= 500:

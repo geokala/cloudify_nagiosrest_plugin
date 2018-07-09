@@ -1,5 +1,9 @@
+import contextmanager
+import os
+import subprocess
+import tempfile
+
 import requests
-# TODO: Add requests to requirements
 
 from cloudify import ctx as cloudify_ctx
 from cloudify.decorators import operation
@@ -31,27 +35,29 @@ def _get_credentials(ctx):
     return props['username'], props['password']
 
 
+@contextmanager
 def _get_cert(ctx):
     props = ctx.node.properties['nagiosrest_monitoring']
-    return _FakeCertFile(props['certificate'])
-
-
-class _FakeCertFile(object):
-    def __init__(self, data):
-        self.contents = data
-
-    def read(self):
-        return self.contents
+    cert = props['certificate']
+    tmpdir = tempfile.mkdtemp(prefix='nagiosrestcert_')
+    cert_path = os.path.join(tmpdir, 'cert')
+    with open(cert_path, 'w') as cert_handle:
+        cert_handle.write(cert)
+    try:
+        yield cert_path
+    finally:
+        subprocess.check_call(['rm', '-rf', tmpdir])
 
 
 def _make_call(ctx, request_method, data=None):
     url = _get_instance_id_url(ctx)
-    result = request_method(
-        url,
-        auth=_get_credentials(ctx),
-        json=data,
-        verify=_get_cert(ctx),
-    )
+    with _get_cert(ctx) as cert:
+        result = request_method(
+            url,
+            auth=_get_credentials(ctx),
+            json=data,
+            verify=cert,
+        )
 
     if result.status_code >= 500:
         raise RecoverableError(

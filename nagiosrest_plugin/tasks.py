@@ -10,15 +10,33 @@ from cloudify.decorators import operation
 from cloudify.exceptions import RecoverableError, NonRecoverableError
 
 
+def _get_base_url(ctx, entity_type):
+    return 'https://{address}/nagiosrest/{entity_type}s/{tenant}'.format(
+        address=ctx.node.properties['nagiosrest_monitoring']['address'],
+        entity_type=entity_type,
+        tenant=cloudify_ctx.tenant_name,
+    )
+
+
 def _get_instance_id_url(ctx):
     return (
-        'https://{address}/nagiosrest/targets/'
-        '{tenant}/{deployment}/{instance_id}'
+        '{base_url}'
+        '/{deployment}/{instance_id}'
     ).format(
-        address=ctx.node.properties['nagiosrest_monitoring']['address'],
-        tenant=cloudify_ctx.tenant_name,
+        base_url=_get_base_url(ctx, 'target'),
         deployment=ctx.deployment.id,
         instance_id=ctx.instance.id,
+    )
+
+
+def _get_group_url(ctx):
+    return (
+        '{base_url}'
+        '/{group_type}/{group_name}'
+    ).format(
+        base_url=_get_base_url(ctx, 'group'),
+        group_type=ctx.node.properties['group_type'],
+        group_name=ctx.node.properties['group_name'],
     )
 
 
@@ -49,8 +67,7 @@ def _get_cert(ctx):
         subprocess.check_call(['rm', '-rf', tmpdir])
 
 
-def _make_call(ctx, request_method, data=None):
-    url = _get_instance_id_url(ctx)
+def _make_call(ctx, request_method, url, data):
     with _get_cert(ctx) as cert:
         result = request_method(
             url,
@@ -86,19 +103,38 @@ def _make_call(ctx, request_method, data=None):
 @operation
 def add_monitoring(ctx):
     props = ctx.node.properties['nagiosrest_monitoring']
+    url = _get_instance_id_url(ctx)
     _make_call(
         ctx,
         requests.put,
+        url,
         {
             'instance_ip': _get_instance_ip(ctx),
             'target_type': props['target_type'],
+            'groups': props['groups'],
         },
     )
 
 
 @operation
 def remove_monitoring(ctx):
+    url = _get_instance_id_url(ctx)
     _make_call(
         ctx,
         requests.delete,
+        url,
+    )
+
+
+@operation
+def create_group(ctx):
+    props = ctx.node.properties
+    url = _get_group_url(ctx)
+    _make_call(
+        ctx,
+        requests.put,
+        url,
+        {
+            'reaction_target': props['reaction_target'],
+        },
     )

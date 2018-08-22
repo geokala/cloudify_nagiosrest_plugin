@@ -123,6 +123,7 @@ def remove_monitoring(ctx):
         ctx,
         requests.delete,
         url,
+        None,
     )
 
 

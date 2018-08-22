@@ -19,12 +19,13 @@ def _get_base_url(ctx, entity_type):
 
 
 def _get_instance_id_url(ctx):
+    props = ctx.node.properties['nagiosrest_monitoring']
     return (
         '{base_url}'
         '/{deployment}/{instance_id}'
     ).format(
         base_url=_get_base_url(ctx, 'target'),
-        deployment=ctx.deployment.id,
+        deployment=props['deployment_override'] or ctx.deployment.id,
         instance_id=ctx.instance.id,
     )
 

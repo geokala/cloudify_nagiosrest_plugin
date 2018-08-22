@@ -3,7 +3,7 @@ plugins:
         executor: central_deployment_agent
         source: null
         package_name: cloudify-nagiosrest-plugin
-        package_version: 0.4.2
+        package_version: 0.5.0
         install: true
 
 
@@ -43,6 +43,13 @@ data_types:
                     The runtime property or node property (if runtime property
                     is unavailable) that contains this node's IP address.
                 default: ip
+            deployment_override:
+                description: >
+                    Used to associate a node with a deployment it is not part of.
+                    This will cause it to be reported as if part of that deployment, and
+                    any reaction workflows for the node or its instances will be run
+                    against that deployment.
+                default: null
             groups:
                 description: >
                     What groups this node is a member of.

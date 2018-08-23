@@ -154,7 +154,7 @@ def create_group(ctx):
 
 
 @operation
-def create_metagroup(ctx):
+def create_meta_group(ctx):
     props = ctx.node.properties
     url = _get_metagroup_url(ctx)
 

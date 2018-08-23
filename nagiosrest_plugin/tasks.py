@@ -41,6 +41,17 @@ def _get_group_url(ctx):
     )
 
 
+def _get_metagroup_url(ctx):
+    return (
+        '{base_url}'
+        '/{group_type}/{group_instance_prefix}'
+    ).format(
+        base_url=_get_base_url(ctx, 'metagroup'),
+        group_type=ctx.node.properties['group_type'],
+        group_instance_prefix=ctx.node.properties['group_instance_prefix'],
+    )
+
+
 def _get_instance_ip(ctx):
     ip = ctx.node.properties['nagiosrest_monitoring']['instance_ip_property']
     try:
@@ -139,4 +150,34 @@ def create_group(ctx):
         {
             'reaction_target': props['reaction_target'],
         },
+    )
+
+
+@operation
+def create_metagroup(ctx):
+    props = ctx.node.properties
+    url = _get_metagroup_url(ctx)
+
+    data = {
+        'approach': props['approach'],
+        'unknown': props['unknown'],
+        'target': props['target'],
+    }
+    for prop in (
+        'interval',
+        'low_warning_threshold',
+        'low_critical_threshold',
+        'high_warning_threshold',
+        'high_critical_threshold',
+        'low_reaction',
+        'high_reaction',
+    ):
+        if props.get(prop):
+            data[prop] = props[prop]
+
+    _make_call(
+        ctx,
+        requests.put,
+        url,
+        data,
     )

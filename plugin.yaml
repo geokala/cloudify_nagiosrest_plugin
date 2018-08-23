@@ -3,7 +3,7 @@ plugins:
         executor: central_deployment_agent
         source: null
         package_name: cloudify-nagiosrest-plugin
-        package_version: 0.5.0
+        package_version: 0.6.0
         install: true
 
 
@@ -55,6 +55,37 @@ data_types:
                     What groups this node is a member of.
                     This should be a list of [group_type, group_name] lists.
                 default: []
+    cloudify.nagiosrest.datatypes.workflow:
+        properties:
+            workflow_id:
+                description: >
+                    The ID of the workflow to call.
+                    If this is null then there will be no reaction.
+                default: null
+            parameters:
+                description: >
+                    A dictionary of parameters to pass to this workflow.
+                    The following substitutions will be performed:
+                    {{deployment}} - The deployment name associated with
+                                     the instance or node that this workflow
+                                     was triggered from.
+                    {{node}} - The node ID associated with the instance or
+                               node that this workflow was triggered from.
+                    {{instance}} - The instance ID of the instance that
+                                   this workflow was triggered from.
+                                   This is not applicable for checks across
+                                   all instances of a node.
+                default: {}
+            allow_custom_parameters:
+                description: >
+                    Whether to allow parameters that are not expected
+                    to be supplied to this workflow.
+                default: false
+            force:
+                description: >
+                    Whether to force this workflow to run if another
+                    workflow is running on the same deployment.
+                default: false
 
 node_types:
     cloudify.nagiosrest.nodes.GroupInstance:
@@ -69,6 +100,68 @@ node_types:
             reaction_target:
                 description: >
                     The deployment that reaction workflows for this group instance will run against.
+            nagiosrest_monitoring:
+                description: >
+                    Connection details for nagiosrest server.
+                type: cloudify.datatypes.nagiosrest.ConnectionProperties
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: nagiosrest.nagiosrest_plugin.tasks.create_group
+                    inputs: {}
+
+    cloudify.nagiosrest.nodes.MetaGroup:
+        derived_from: cloudify.nodes.ApplicationModule
+        properties:
+            group_type:
+                description: >
+                    The type of group (declared in the nagios blueprint).
+            group_instance_prefix:
+                description: >
+                    The prefix of all checks of this type to include in this aggregate.
+            target:
+                description: >
+                    The deployment that reaction workflows for this group instance will run against.
+            approach:
+                description: >
+                    Which approach to use to calculate the aggregate.
+                    Valid options are: arithmetic_mean, sum
+            unknown:
+                description: >
+                    What to do if encountering unknown results on the aggregation check.
+                    'ignore' will ignore the check but process the average from the rest of the checks.
+                    'abort' will cause the aggregate check to enter an unknown status.
+                default: abort
+            interval:
+                description: >
+                    How often to run checks, in minutes.
+                default: 1
+            low_warning_threshold:
+                description: >
+                    Warning state when below this threshold.
+                    Warning states will not cause actions, they are for visual feedback.
+                default: ""
+            low_critical_threshold:
+                description: >
+                    Critical state when below this threshold.
+                default: ""
+            high_warning_threshold:
+                description: >
+                    Warning state when above this threshold.
+                    Warning states will not cause actions, they are for visual feedback.
+                default: ""
+            high_critical_threshold:
+                description: >
+                    Critical state when above this threshold.
+                default: ""
+            low_reaction:
+                description: >
+                    What action to take when the low critical threshold is breached.
+                type: cloudify.nagiosrest.datatypes.workflow
+            high_reaction:
+                description: >
+                    What action to take when the high critical threshold is breached.
+                type: cloudify.nagiosrest.datatypes.workflow
             nagiosrest_monitoring:
                 description: >
                     Connection details for nagiosrest server.
